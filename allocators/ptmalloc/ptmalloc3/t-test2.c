@@ -15,6 +15,8 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 
+#include <libustperf.h>
+
 #if !USE_MALLOC
 #include <malloc.h>
 #else
@@ -86,8 +88,34 @@ malloc_test(struct thread_st *st)
 	unsigned long rsize[BINS_PER_BLOCK];
 	int rnum[BINS_PER_BLOCK];
 
+	unsigned long pmu1_start, pmu1_end;
+	unsigned long pmu2_start, pmu2_end;
+	unsigned long pmu3_start, pmu3_end;
+	unsigned long pmu4_start, pmu4_end;
+	struct timespec ts_start, ts_end, ts_diff;
+	struct perf_event_mmap_page *perf_mmap1, *perf_mmap2, *perf_mmap3,
+		*perf_mmap4;
+
+	perf_mmap1 = setup_perf(attr1);
+	if(!perf_mmap1) {
+	    printf("Couldn't allocate perf_mmap1\n");
+	}
+	perf_mmap2 = setup_perf(attr2);
+	if(!perf_mmap2) {
+	    printf("Couldn't allocate perf_mmap2\n");
+	}
+	perf_mmap3 = setup_perf(attr3);
+	if(!perf_mmap3) {
+	    printf("Couldn't allocate perf_mmap3\n");
+	}
+	perf_mmap4 = setup_perf(attr4);
+	if(!perf_mmap4) {
+	    printf("Couldn't allocate perf_mmap4\n");
+	}
+
 	lran2_init(&ld, st->u.seed);
 	for(i=0; i<=st->u.max;) {
+		int pos = 0;
 #if TEST > 1
 		bin_test();
 #endif
@@ -106,8 +134,11 @@ malloc_test(struct thread_st *st)
 				rnum[b] = lran2(&ld);
 			}
 			mutex_lock(&bl->mutex);
-			for(b=0; b<BINS_PER_BLOCK; b++)
+			for(b=0; b<BINS_PER_BLOCK; b++) {
+				LIB_PERF_ITER_START
 				bin_alloc(&bl->b[b], rsize[b], rnum[b]);
+				LIB_PERF_ITER_END
+			}
 			mutex_unlock(&bl->mutex);
 			i += BINS_PER_BLOCK;
 		}
@@ -115,6 +146,7 @@ malloc_test(struct thread_st *st)
 		bin_test();
 #endif
 	}
+	LIB_PERF_END
 }
 
 int n_total=0, n_total_max=N_TOTAL, n_running;
@@ -188,6 +220,7 @@ main(int argc, char *argv[])
 	thr_setconcurrency(n_thr);
 #endif
 
+	perf_init(4);
 	/* Start all n_thr threads. */
 	for(i=0; i<n_thr; i++) {
 		st[i].u.max = i_max;

@@ -20,7 +20,7 @@ TAR_FLAGS = --numeric-owner --exclude "*~" --exclude "debian/tmp*"
 CC = gcc
 
 SYS_FLAGS  =
-OPT_FLAGS  = -g -O2 #-O # -O2
+OPT_FLAGS  = -g -O0 #-O # -O2
 WARN_FLAGS = -Wall -Wstrict-prototypes
 SH_FLAGS   = -shared -fpic
 
@@ -35,7 +35,7 @@ M_FLAGS   = -DTHREAD_STATS=1 #-DMALLOC_DEBUG=1 -DDEBUG=1
 # Thread flags.
 # See the platform-specific targets below.
 THR_FLAGS = -DUSE_TSD_DATA_HACK -D_REENTRANT
-THR_LIBS  = -lpthread
+THR_LIBS  = -lpthread -lbench
 
 RM        = rm -f
 AR        = ar
@@ -115,7 +115,7 @@ posix:
 	$(MAKE) THR_FLAGS='-DUSE_TSD_DATA_HACK -D_REENTRANT' \
  OPT_FLAGS='$(OPT_FLAGS)' SYS_FLAGS='$(SYS_FLAGS)' CC='$(CC)' \
  INC_FLAGS='-Isysdeps/pthread -Isysdeps/generic -I.'
- THR_LIBS=-lpthread
+ THR_LIBS=-lpthread -lbench
 
 # posix threads with explicit initialization.  Known to be needed on HPUX.
 posix-explicit:
